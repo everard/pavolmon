@@ -12,7 +12,7 @@
 
 #include <pulse/pulseaudio.h>
 
-namespace svq {
+namespace pvm {
 
 using ::std::uint32_t;
 
@@ -200,7 +200,7 @@ struct state {
     bool has_data_changed{false};
 };
 
-} // namespace svq
+} // namespace pvm
 
 static char const* program_name = "pvm";
 
@@ -243,7 +243,7 @@ print_error_message(char const* message) {
 
 int
 main(int argc, char* argv[]) {
-    ::svq::config cfg{"VOL+", "VOL-", "MIC+", "MIC-"};
+    ::pvm::config cfg{"VOL+", "VOL-", "MIC+", "MIC-"};
 
     if(argc == 2) {
         if(::std::string(argv[1]) == "-h") {
@@ -265,7 +265,7 @@ main(int argc, char* argv[]) {
         return print_error_message("wrong number of arguments");
     }
 
-    ::svq::state app{cfg};
+    ::pvm::state app{cfg};
 
     while(pa_mainloop_iterate(app.mainloop, true, nullptr) >= 0) {
         app.print_collected_volume_data();

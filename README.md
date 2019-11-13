@@ -25,28 +25,30 @@ sudo make uninstall
 To show the help message, run:
 
 ```
-pvm -h
+pavolmon -h
 ```
 
 To start monitoring the sound volume, run:
 
 ```
-pvm
+pavolmon
 ```
 
 To use custom labels for speaker and microphone, run (as an example):
 
 ```
-pvm -f "VOL: " "VOL[MUTED]: " "MIC: " "MIC[MUTED]: "
+pavolmon -f "VOL: " "VOL[MUTED]: " "MIC: " "MIC[MUTED]: "
 ```
 
 Another example (if your terminal supports Unicode):
 
 ```
-pvm -f "🔊 " "🔊ₓ" "🎤 " "🎤ₓ"
+pavolmon -f "🔊 " "🔊ₓ" "🎤 " "🎤ₓ"
 ```
 
 # LICENSE
+Copyright Nezametdinov E. Ildus 2019.
+
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 

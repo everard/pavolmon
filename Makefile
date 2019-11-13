@@ -1,11 +1,13 @@
+TARGET_NAME=pavolmon
+
 monitor:
-	$(CXX) -Wall -Wextra -O2 -std=c++17 -lpulse -o build/pvm src/main.cc
+	$(CC) -Wall -Wextra -O2 -std=c17 -lpulse -o build/$(TARGET_NAME) src/pavolmon.c
 
 clean:
-	rm -f build/pvm
+	rm -f build/$(TARGET_NAME)
 
 install:
-	cp build/pvm /usr/local/bin/pvm
+	cp build/$(TARGET_NAME) /usr/local/bin/$(TARGET_NAME)
 
 uninstall:
-	rm /usr/local/bin/pvm
+	rm /usr/local/bin/$(TARGET_NAME)
