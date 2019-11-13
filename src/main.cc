@@ -1,5 +1,7 @@
-// Copyright(c) 2019 Nezametdinov E. Ildus.
-// See the LICENCE file for licensing conditions.
+// Copyright Nezametdinov E. Ildus 2019.
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt or copy at
+// https://www.boost.org/LICENSE_1_0.txt)
 //
 #include <cstddef>
 #include <cstdint>
@@ -200,10 +202,69 @@ struct state {
 
 } // namespace svq
 
+static char const* program_name = "pvm";
+
+inline void
+print_usage(::std::ostream& stream = ::std::cout) {
+    stream << "usage: " << program_name
+           << " [-h] [-f SPEAKER MUTED_SPEAKER MICROPHONE MUTED_MICROPHONE]"
+           << ::std::endl;
+}
+
+inline void
+print_program_description(::std::ostream& stream = ::std::cout) {
+    stream
+        << "Asynchronously monitors the state of the PulseAudio server and "
+           "outputs the"
+        << ::std::endl
+        << "volume of the default sink (audio output) and source (audio input)."
+        << ::std::endl
+        << ::std::endl;
+    print_usage(stream);
+    stream << ::std::endl;
+
+    stream << "optional arguments:" << ::std::endl;
+    stream << "  -h        show this help message and exit" << ::std::endl;
+    stream << "  -f SPEAKER MUTED_SPEAKER MICROPHONE MUTED_MICROPHONE"
+           << ::std::endl;
+    stream << "            use the given labels for speaker, muted speaker, "
+              "microphone and"
+           << ::std::endl;
+    stream << "            muted microphone" << ::std::endl;
+}
+
+inline int
+print_error_message(char const* message) {
+    ::std::cerr << program_name << ": error: " << message << ::std::endl;
+    print_usage(::std::cerr);
+
+    return EXIT_FAILURE;
+}
+
 int
-main() {
-    ::svq::config cfg{u8"\xF0\x9F\x94\x8A+", u8"\xF0\x9F\x94\x87-",
-                      u8"\xF0\x9F\x8E\xA4+", u8"\xF0\x9F\x8E\xA4-"};
+main(int argc, char* argv[]) {
+    ::svq::config cfg{"VOL+", "VOL-", "MIC+", "MIC-"};
+
+    if(argc == 2) {
+        if(::std::string(argv[1]) == "-h") {
+            print_program_description();
+            return EXIT_SUCCESS;
+        } else {
+            return print_error_message("wrong number of arguments");
+        }
+    } else if(argc == 6) {
+        if(::std::string(argv[1]) == "-f") {
+            cfg.speaker = argv[2];
+            cfg.speaker_muted = argv[3];
+            cfg.mic = argv[4];
+            cfg.mic_muted = argv[5];
+        } else {
+            return print_error_message("unknown argument");
+        }
+    } else if(argc > 1) {
+        return print_error_message("wrong number of arguments");
+    }
+
     ::svq::state app{cfg};
 
     while(pa_mainloop_iterate(app.mainloop, true, nullptr) >= 0) {
