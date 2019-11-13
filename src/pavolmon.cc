@@ -202,7 +202,7 @@ struct state {
 
 } // namespace pvm
 
-static char const* program_name = "pvm";
+static char const* program_name = "pavolmon";
 
 inline void
 print_usage(::std::ostream& stream = ::std::cout) {
