@@ -5,7 +5,7 @@ This program might come in handy if you are using something similar to i3blocks.
 # COMPILATION
 Simply run `make` in your command line.
 
-Note: A C++17-capable compiler is required; PulseAudio development headers must be installed.
+Note: A C11-capable compiler is required; PulseAudio development headers must be installed.
 
 # INSTALLATION [OPTIONAL]
 Run the following command to copy the compiled binary to your /usr/local/bin/ directory.
@@ -15,7 +15,7 @@ sudo make install
 ```
 
 # UNINSTALLATION
-To remove the compiled binary from your system run the following command.
+To remove the installed binary from your system, run the following command.
 
 ```
 sudo make uninstall
