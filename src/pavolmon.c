@@ -21,9 +21,14 @@ typedef struct {
 } pvm_config;
 
 typedef struct {
+    uint32_t idx;
+    bool is_idx_valid;
+} pvm_device_desc;
+
+typedef struct {
     pa_volume_t volume;
     bool is_muted;
-} pvm_volume_data;
+} pvm_volume_info;
 
 typedef struct {
     pvm_config cfg;
@@ -31,7 +36,9 @@ typedef struct {
     pa_mainloop* mainloop;
     pa_context* context;
 
-    pvm_volume_data sink, source;
+    pvm_device_desc sink_desc, source_desc;
+    pvm_volume_info sink_info, source_info;
+
     bool has_data_changed;
 } pvm_state;
 
@@ -54,6 +61,10 @@ pvm_unref(pa_operation* x);
 
 static int
 pvm_normalize_volume(pa_volume_t x);
+
+static bool
+pvm_update_volume_info(pvm_volume_info* info, pa_volume_t volume,
+                       bool is_muted);
 
 // PulseAudio event callback functions.
 //
@@ -87,8 +98,8 @@ pvm_print_usage(FILE* stream);
 static void
 pvm_print_program_description(FILE* stream);
 
-static int
-pvm_print_error_message(char const* message);
+static void
+pvm_print_error_message_and_exit(char const* message);
 
 static void
 pvm_print_volume_data(pvm_state* x);
@@ -156,6 +167,19 @@ pvm_normalize_volume(pa_volume_t x) {
     return (int)(p);
 }
 
+bool
+pvm_update_volume_info(pvm_volume_info* info, pa_volume_t volume,
+                       bool is_muted) {
+    if((info->volume == volume) && (info->is_muted == is_muted)) {
+        return false;
+    }
+
+    info->volume = volume;
+    info->is_muted = is_muted;
+
+    return true;
+}
+
 //
 // Implementation of the PulseAudio event callback functions.
 //
@@ -176,9 +200,7 @@ pvm_context_state_callback(pa_context* context, void* userdata) {
             pvm_unref(pa_context_subscribe(
                 context,
                 (pa_subscription_mask_t)(PA_SUBSCRIPTION_MASK_SINK |
-                                         PA_SUBSCRIPTION_MASK_SINK_INPUT |
                                          PA_SUBSCRIPTION_MASK_SOURCE |
-                                         PA_SUBSCRIPTION_MASK_SOURCE_OUTPUT |
                                          PA_SUBSCRIPTION_MASK_SERVER),
                 NULL, NULL));
             pvm_unref(pa_context_get_server_info(
@@ -200,17 +222,22 @@ void
 pvm_context_subscription_event_callback(pa_context* context,
                                         pa_subscription_event_type_t type,
                                         uint32_t idx, void* userdata) {
-    /* Prevent compiler warnings. */ { (void)(idx); }
-
+    pvm_state* s = (pvm_state*)(userdata);
     switch(type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK) {
         case PA_SUBSCRIPTION_EVENT_SINK:
-            /*fallthrough*/;
-        case PA_SUBSCRIPTION_EVENT_SINK_INPUT:
-            /*fallthrough*/;
+            if(s->sink_desc.is_idx_valid && (s->sink_desc.idx == idx)) {
+                pvm_unref(pa_context_get_sink_info_by_index(
+                    context, idx, pvm_sink_info_callback, userdata));
+            }
+            break;
+
         case PA_SUBSCRIPTION_EVENT_SOURCE:
-            /*fallthrough*/;
-        case PA_SUBSCRIPTION_EVENT_SOURCE_OUTPUT:
-            /*fallthrough*/;
+            if(s->source_desc.is_idx_valid && (s->source_desc.idx == idx)) {
+                pvm_unref(pa_context_get_source_info_by_index(
+                    context, idx, pvm_source_info_callback, userdata));
+            }
+            break;
+
         case PA_SUBSCRIPTION_EVENT_SERVER:
             pvm_unref(pa_context_get_server_info(
                 context, pvm_server_info_callback, userdata));
@@ -235,41 +262,40 @@ pvm_server_info_callback(pa_context* context, pa_server_info const* info,
                                            pvm_source_info_callback, userdata));
 }
 
+#define info_callback_impl_(type)                                           \
+    /* Prevent compiler warnings. */ {                                      \
+        (void)(context);                                                    \
+        (void)(eol);                                                        \
+    }                                                                       \
+                                                                            \
+    if(info == NULL) {                                                      \
+        return;                                                             \
+    }                                                                       \
+                                                                            \
+    pvm_state* s = (pvm_state*)(userdata);                                  \
+    pvm_device_desc* desc = &(s->type##_desc);                              \
+                                                                            \
+    desc->idx = info->index;                                                \
+    desc->is_idx_valid = true;                                              \
+                                                                            \
+    if(pvm_update_volume_info(                                              \
+           &(s->type##_info), info->volume.values[0], (info->mute != 0))) { \
+        s->has_data_changed = true;                                         \
+    }
+
 void
 pvm_sink_info_callback(pa_context* context, pa_sink_info const* info, int eol,
                        void* userdata) {
-    /* Prevent compiler warnings. */ {
-        (void)(context);
-        (void)(eol);
-    }
-
-    if(info == NULL) {
-        return;
-    }
-
-    pvm_state* s = (pvm_state*)(userdata);
-    s->has_data_changed = true;
-    s->sink = (pvm_volume_data){
-        .volume = info->volume.values[0], .is_muted = (info->mute != 0)};
+    info_callback_impl_(sink);
 }
 
 void
 pvm_source_info_callback(pa_context* context, pa_source_info const* info,
                          int eol, void* userdata) {
-    /* Prevent compiler warnings. */ {
-        (void)(context);
-        (void)(eol);
-    }
-
-    if(info == NULL) {
-        return;
-    }
-
-    pvm_state* s = (pvm_state*)(userdata);
-    s->has_data_changed = true;
-    s->source = (pvm_volume_data){
-        .volume = info->volume.values[0], .is_muted = (info->mute != 0)};
+    info_callback_impl_(source);
 }
+
+#undef info_callback_impl_
 
 //
 // Implementation of the output functions.
@@ -301,12 +327,12 @@ pvm_print_program_description(FILE* stream) {
             "            muted microphone");
 }
 
-int
-pvm_print_error_message(char const* message) {
+void
+pvm_print_error_message_and_exit(char const* message) {
     fprintf(stderr, "%s: error: %s\n", pvm_program_name, message);
     pvm_print_usage(stderr);
 
-    return EXIT_FAILURE;
+    exit(EXIT_FAILURE);
 }
 
 void
@@ -315,10 +341,10 @@ pvm_print_volume_data(pvm_state* x) {
         x->has_data_changed = false;
 
         fprintf(stdout, "%s%3d%% %s%3d%%\n",
-                (x->sink.is_muted ? x->cfg.speaker_muted : x->cfg.speaker),
-                pvm_normalize_volume(x->sink.volume),
-                (x->source.is_muted ? x->cfg.mic_muted : x->cfg.mic),
-                pvm_normalize_volume(x->source.volume));
+                (x->sink_info.is_muted ? x->cfg.speaker_muted : x->cfg.speaker),
+                pvm_normalize_volume(x->sink_info.volume),
+                (x->source_info.is_muted ? x->cfg.mic_muted : x->cfg.mic),
+                pvm_normalize_volume(x->source_info.volume));
     }
 }
 
@@ -338,7 +364,7 @@ main(int argc, char* argv[]) {
             pvm_print_program_description(stdout);
             return EXIT_SUCCESS;
         } else {
-            return pvm_print_error_message("wrong number of arguments");
+            pvm_print_error_message_and_exit("wrong number of arguments");
         }
     } else if(argc == 6) {
         if(strcmp(argv[1], "-f") == 0) {
@@ -347,10 +373,10 @@ main(int argc, char* argv[]) {
             cfg.mic = argv[4];
             cfg.mic_muted = argv[5];
         } else {
-            return pvm_print_error_message("unknown argument");
+            pvm_print_error_message_and_exit("unknown argument");
         }
     } else if(argc > 1) {
-        return pvm_print_error_message("wrong number of arguments");
+        pvm_print_error_message_and_exit("wrong number of arguments");
     }
 
     pvm_state app = {};
