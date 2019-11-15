@@ -326,7 +326,7 @@ pvm_print_program_description(FILE* stream) {
             "  -f SPEAKER MUTED_SPEAKER MICROPHONE MUTED_MICROPHONE\n"
             "            use the given labels for speaker, muted speaker, "
             "microphone and\n"
-            "            muted microphone");
+            "            muted microphone\n");
 }
 
 void
