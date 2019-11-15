@@ -347,6 +347,7 @@ pvm_print_volume_data(pvm_state* x) {
                 pvm_normalize_volume(x->sink_info.volume),
                 (x->source_info.is_muted ? x->cfg.mic_muted : x->cfg.mic),
                 pvm_normalize_volume(x->source_info.volume));
+        fflush(stdout);
     }
 }
 
