@@ -1,32 +1,26 @@
 # DESCRIPTION
 This repository contains the source code for a simple stand-alone zero-config PulseAudio input/output sound volume monitor.
-This program might come in handy if you are using something similar to i3blocks.
+This program has very minimal memory/CPU footprint and might come in handy if you are using i3Blocks.
 
-# COMPILATION
-Simply run `make` in your command line.
+# COMPILATION/INSTALLATION
+Run `make` in your command line to compile.
 
 Note: A C11-capable compiler is required; PulseAudio development headers must be installed.
 
-# INSTALLATION [OPTIONAL]
-Run the following command to copy the compiled binary to your /usr/local/bin/ directory.
+The compiled binary can be copied to the `/usr/local/bin/` directory using the following command.
 
 ```
 sudo make install
 ```
 
-# UNINSTALLATION
-To remove the installed binary from your system, run the following command.
+The installed binary can be removed from the `/usr/local/bin/` directory using the following command.
 
 ```
 sudo make uninstall
 ```
 
 # USAGE
-To show the help message, run:
-
-```
-pavolmon -h
-```
+The program's help message can be viewed using the `pavolmon -h` command.
 
 To start monitoring the sound volume, run:
 
@@ -51,4 +45,3 @@ Copyright Nezametdinov E. Ildus 2019.
 
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
-
