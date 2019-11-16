@@ -1,6 +1,6 @@
 # DESCRIPTION
 This repository contains the source code for a simple stand-alone zero-config PulseAudio input/output sound volume monitor.
-This program has very minimal memory/CPU footprint and might come in handy if you are using i3Blocks.
+This program has _very_ minimal RAM/CPU footprint and might come in handy if you are using [i3blocks](https://github.com/vivien/i3blocks).
 
 # COMPILATION/INSTALLATION
 Run `make` in your command line to compile.
@@ -20,6 +20,8 @@ sudo make uninstall
 ```
 
 # USAGE
+
+## Command line
 The program's help message can be viewed using the `pavolmon -h` command.
 
 To start monitoring the sound volume, run:
@@ -38,6 +40,15 @@ Another example (if your terminal supports Unicode):
 
 ```
 pavolmon -f "🔊 " "🔊ₓ" "🎤 " "🎤ₓ"
+```
+
+## i3blocks
+Add the following block to the [i3blocks](https://github.com/vivien/i3blocks) config file:
+
+```
+[pavolmon]
+command=pavolmon -f "🔊 " "🔊ₓ" "🎤 " "🎤ₓ"
+interval=persist
 ```
 
 # LICENSE
