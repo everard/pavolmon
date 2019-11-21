@@ -342,11 +342,23 @@ pvm_print_volume_data(pvm_state* x) {
     if(x->has_data_changed) {
         x->has_data_changed = false;
 
-        fprintf(stdout, "%s%3d%% %s%3d%%\n",
-                (x->sink_info.is_muted ? x->cfg.speaker_muted : x->cfg.speaker),
-                pvm_normalize_volume(x->sink_info.volume),
-                (x->source_info.is_muted ? x->cfg.mic_muted : x->cfg.mic),
-                pvm_normalize_volume(x->source_info.volume));
+        char const* speaker =
+            (x->sink_info.is_muted ? x->cfg.speaker_muted : x->cfg.speaker);
+        char const* mic =
+            (x->source_info.is_muted ? x->cfg.mic_muted : x->cfg.mic);
+
+        int speaker_volume = pvm_normalize_volume(x->sink_info.volume);
+        int mic_volume = pvm_normalize_volume(x->source_info.volume);
+
+#ifdef PVM_PRINT
+        /* Use custom output format. */ {
+#include PVM_PRINT
+        }
+#else
+        fprintf(stdout, "%s%3d%% %s%3d%%\n", speaker, speaker_volume, mic,
+                mic_volume);
+#endif
+
         fflush(stdout);
     }
 }

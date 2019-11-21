@@ -3,7 +3,7 @@ This repository contains the source code for a simple stand-alone zero-config Pu
 This program has _very_ minimal RAM/CPU footprint and might come in handy if you are using [i3blocks](https://github.com/vivien/i3blocks).
 
 # COMPILATION/INSTALLATION
-Run `make` in your command line to compile.
+Run `make` in your command line to compile. Run `make monitor-bars` to compile the program that will output bars instead of percentages.
 
 Note: A C11-capable compiler is required; PulseAudio development headers must be installed.
 
@@ -18,6 +18,16 @@ The installed binary can be removed from the `/usr/local/bin/` directory using t
 ```
 sudo make uninstall
 ```
+
+## Custom output format
+Volume output format can be customized using source files:
+1. Create a new text file in the `src/` directory:
+
+`touch src/your_custom_format`
+
+2. Edit the file; use the `src/format_bars.c` file as a reference;
+
+3. Run `make monitor-custom-format FORMAT=your_custom_format` to compile the program that will output volume data in your custom format.
 
 # USAGE
 
