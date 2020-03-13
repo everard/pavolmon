@@ -52,6 +52,12 @@ Another example (if your terminal supports Unicode):
 pavolmon -f "🔊 " "🔊ₓ" "🎤 " "🎤ₓ"
 ```
 
+Or, if you are using version with vertical bars instead of numbers (that was built with `make monitor-bars`):
+
+```
+pavolmon -f 🔊 🔊 🎤 🎤
+```
+
 ## i3blocks
 Add the following block to the [i3blocks](https://github.com/vivien/i3blocks) config file:
 

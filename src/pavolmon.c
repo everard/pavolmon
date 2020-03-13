@@ -44,7 +44,7 @@ typedef struct {
     bool has_data_changed;
 } pvm_state;
 
-static char const* pvm_program_name = "pavolmon";
+static char const* const pvm_program_name = "pavolmon";
 
 // State initialization/destruction functions.
 //
@@ -337,24 +337,45 @@ pvm_print_error_message_and_exit(char const* message) {
     exit(EXIT_FAILURE);
 }
 
+#ifdef PVM_PRINT
+static void
+pvm_print_volume_data_in_custom_format(pvm_config cfg, int speaker_volume,
+                                       int mic_volume, bool is_speaker_muted,
+                                       bool is_mic_muted);
+
+void
+pvm_print_volume_data_in_custom_format(pvm_config cfg, int speaker_volume,
+                                       int mic_volume, bool is_speaker_muted,
+                                       bool is_mic_muted) {
+    /* Prevent compiler warnings. */ {
+        (void)(cfg);
+        (void)(is_speaker_muted);
+        (void)(is_mic_muted);
+    }
+
+#include PVM_PRINT
+}
+#endif
+
 void
 pvm_print_volume_data(pvm_state* x) {
     if(x->has_data_changed) {
         x->has_data_changed = false;
 
+        int speaker_volume = pvm_normalize_volume(x->sink_info.volume);
+        int mic_volume = pvm_normalize_volume(x->source_info.volume);
+
+#ifdef PVM_PRINT
+        // Use custom output format.
+        pvm_print_volume_data_in_custom_format(
+            x->cfg, speaker_volume, mic_volume, x->sink_info.is_muted,
+            x->source_info.is_muted);
+#else
         char const* speaker =
             (x->sink_info.is_muted ? x->cfg.speaker_muted : x->cfg.speaker);
         char const* mic =
             (x->source_info.is_muted ? x->cfg.mic_muted : x->cfg.mic);
 
-        int speaker_volume = pvm_normalize_volume(x->sink_info.volume);
-        int mic_volume = pvm_normalize_volume(x->source_info.volume);
-
-#ifdef PVM_PRINT
-        /* Use custom output format. */ {
-#include PVM_PRINT
-        }
-#else
         fprintf(stdout, "%s%3d%% %s%3d%%\n", speaker, speaker_volume, mic,
                 mic_volume);
 #endif
